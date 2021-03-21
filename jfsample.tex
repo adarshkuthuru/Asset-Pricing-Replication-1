@@ -1,0 +1,524 @@
+% $Id$
+\documentclass[11pt]{article}
+
+% DEFAULT PACKAGE SETUP
+
+\usepackage{setspace,graphicx,epstopdf,amsmath,amsfonts,amssymb,amsthm,versionPO}
+\usepackage{marginnote,datetime,enumitem,subfigure,rotating,fancyvrb}
+\usepackage{hyperref,float}
+\usepackage[longnamesfirst]{natbib}
+\usepackage{longtable}
+\usepackage{lipsum}
+\usepackage{booktabs}
+\usepackage{afterpage,lscape}
+\usdate
+
+% These next lines allow including or excluding different versions of text
+% using versionPO.sty
+
+\excludeversion{notes}		% Include notes?
+\includeversion{links}          % Turn hyperlinks on?
+
+% Turn off hyperlinking if links is excluded
+\iflinks{}{\hypersetup{draft=true}}
+
+% Notes options
+\ifnotes{%
+\usepackage[margin=1in,paperwidth=10in,right=2.5in]{geometry}%
+\usepackage[textwidth=1.4in,shadow,colorinlistoftodos]{todonotes}%
+}{%
+\usepackage[margin=1in]{geometry}%
+\usepackage[disable]{todonotes}%
+}
+
+% Allow todonotes inside footnotes without blowing up LaTeX
+% Next command works but now notes can overlap. Instead, we'll define 
+% a special footnote note command that performs this redefinition.
+%\renewcommand{\marginpar}{\marginnote}%
+
+% Save original definition of \marginpar
+\let\oldmarginpar\marginpar
+
+% Workaround for todonotes problem with natbib (To Do list title comes out wrong)
+\makeatletter\let\chapter\@undefined\makeatother % Undefine \chapter for todonotes
+
+% Define note commands
+\newcommand{\smalltodo}[2][] {\todo[caption={#2}, size=\scriptsize, fancyline, #1] {\begin{spacing}{.5}#2\end{spacing}}}
+\newcommand{\rhs}[2][]{\smalltodo[color=green!30,#1]{{\bf RS:} #2}}
+\newcommand{\rhsnolist}[2][]{\smalltodo[nolist,color=green!30,#1]{{\bf RS:} #2}}
+\newcommand{\rhsfn}[2][]{%  To be used in footnotes (and in floats)
+\renewcommand{\marginpar}{\marginnote}%
+\smalltodo[color=green!30,#1]{{\bf RS:} #2}%
+\renewcommand{\marginpar}{\oldmarginpar}}
+%\newcommand{\textnote}[1]{\ifnotes{{\noindent\color{red}#1}}{}}
+\newcommand{\textnote}[1]{\ifnotes{{\colorbox{yellow}{{\color{red}#1}}}}{}}
+
+% Command to start a new page, starting on odd-numbered page if twoside option 
+% is selected above
+\newcommand{\clearRHS}{\clearpage\thispagestyle{empty}\cleardoublepage\thispagestyle{plain}}
+
+% Number paragraphs and subparagraphs and include them in TOC
+\setcounter{tocdepth}{2}
+
+% JF-specific includes:
+
+\usepackage{indentfirst} % Indent first sentence of a new section.
+\usepackage{endnotes}    % Use endnotes instead of footnotes
+\usepackage{jf}          % JF-specific formatting of sections, etc.
+\usepackage[labelfont=bf,labelsep=period, font=small]{caption}   % Format figure captions
+\captionsetup[table]{labelsep=none}
+
+\usepackage{sidecap} %to put caption on side of the table
+
+% Define theorem-like commands and a few random function names.
+\newtheorem{condition}{CONDITION}
+\newtheorem{corollary}{COROLLARY}
+\newtheorem{proposition}{PROPOSITION}
+\newtheorem{obs}{OBSERVATION}
+\newcommand{\argmax}{\mathop{\rm arg\,max}}
+\newcommand{\sign}{\mathop{\rm sign}}
+\newcommand{\defeq}{\stackrel{\rm def}{=}}
+
+\title{\Large \bf Ph.D. Seminar in Asset Pricing: MFIN8863 \\
+Replication Exercise-1}
+\author{ADARSH KUTHURU}
+\date{\parbox{\linewidth}{\centering%
+  \today\endgraf\bigskip
+  \endgraf\medskip
+  PhD Student in Finance \endgraf
+  Boston College, United States}}
+  
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\bigskip
+\clearpage
+\tableofcontents
+
+\setlist{noitemsep}  % Reduce space between list items (itemize, enumerate, etc.)
+\onehalfspacing      % Use 1.5 spacing
+% Use endnotes instead of footnotes - redefine \footnote command
+\renewcommand{\footnote}{\endnote}  % Endnotes instead of footnotes
+
+\clearpage
+
+
+% Create title page with no page number
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                    Paper-1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\cite{campbell1993moves}} \label{sec:CA}
+
+\subsection{Introduction}
+This section is the replication of \cite{campbell1993moves}. The authors of this paper decompose excess stock returns into cash flows and returns news, and bond returns into returns news which could be further decomposed into risk premium, real interest rate and inflation news. They conclude that both excess stock returns and bond returns are explained mainly by risk premium news but have very low correlations. 
+
+\subsection{Data description}
+The data for excess stock returns and dividends estimated from value-weighted index of stocks traded on the NYSE, AMEX and NASDAQ, are extracted from Center for Research in Security Prices (CRSP). For bond return decomposition, I use McCulloch and Kwon data on zero-coupon yields implied by the yield curve for U.S. Treasury securities. The inflation (CPI) data was extracted from Datastream.
+
+\paragraph{ } As per the original paper, I report results for the full sample period
+1952:1-1987:2, as well as for sub samples 1952:1-1979:9, 1952:1-1972:12,
+and 1973:1-1987:2. 
+
+\subsection{Methodology and Results}
+This paper uses Vector Auto Regression (VAR) approach to forecast excess stock returns and bond returns. The state vector $z_t$ used in this analysis is
+\begin{equation} \label{eq:CA1}
+z_{t}=\left[e_{t}, r_{t}, \Delta y_{1, t}, s_{n, t}, d_{t}-p_{t}, r b_{t}\right]^{\prime}
+\end{equation}
+
+where, [$e_{t}$, $r_{t}$, $\Delta y_{1, t}$, $s_{n, t}$, $d_{t}-p_{t}$, $rb_{t}$] are excess stock return, real interest rate, change in the 1-month bill rate, 10-year and 2-month yield spreads, log dividend-price ratio, and relative bill rate (the difference between the bill rate and a 1-year backwards moving average) respectively.
+
+\paragraph{} The state vector follows first-order VAR as below:
+\begin{equation} \label{eq:CA2}
+z_{t+1}=A z_{t}+w_{t+1}
+\end{equation}
+where, matrix A is the coefficient matrix of the VAR, and $w_{t}$ is the error vector.
+
+\paragraph{} Table-\ref{tab:table1} reports the coefficients matrix of estimated first-order VAR for the
+full sample and each sub sample. This is matrix A in equation (\ref{eq:CA2}).
+In line with the original paper, although there are 36 coefficients in the matrix for each sample, many of these are small in magnitude and statistically insignificant. The sign pattern is stable across all sub samples, although there are some shifts in the magnitude and statistical significance of the coefficients.
+
+\begin{center}
+\begin{longtable}{rccccccc}
+%\centering
+\caption {: VAR Coefficient Estimates} \label{tab:table1} \\
+\caption*{This table reports coefficient estimates for a monthly 1-lag VAR that includes the excess stock return, real interest rate, change in the 1-month bill rate, 10-year and 2-month yield spreads, log dividend-price ratio, and relative bill rate (the difference between the bill rate and a 1-year backwards moving average). The excess stock return is measured in \% per month, while the remaining variables are in \% per year. The values in the parentheses below the coefficients are standard errors.}\\ \\
+%\begin{tabular}{rccccccc}
+ \hline
+ & & $e_t$ & $r_t$ & $\Delta y_{n,t}$ & $s_{n,t}$ & $d_t-p_t$ & $rb_t$ \\ 
+  \hline \\
+ & $e_{t+1}$ & -0.012 & -0.081 & -0.800 & 0.352 & 0.94 & -0.281 \\ 
+  &  & (0.049) & (0.060) & (0.340) & (0.198) & (0.612) & (0.249) \\ 
+  & $r_{t+1}$ & 0.009 & 0.992 & 0.052 & 0.048 & -0.058 & -0.029 \\ 
+  &   & (0.008) & (0.010) & (0.058) & (0.034) & (0.104) & (0.042) \\ 
+  1952:1-1987:2 &  $\Delta y_{n,t+1}$ & 0.014 & -0.006 & 0.085 & 0.046 & -0.074 & -0.024 \\ 
+   &  & (0.008) & (0.010) & (0.055) & (0.032) & (0.099) & (0.04 ) \\ 
+  &  $s_{n,t+1}$ & -0.004 & 0.010 & -0.067 & 0.905 & 0.121 & 0.002 \\ 
+   &  & (0.006) & (0.008) & (0.044) & (0.025) & (0.078) & (0.032) \\ 
+  &  $d_{t+1}-p_{t+1}$ & 0.005 & 0.058 & -0.033 & 0.133 & 0.035 & 0.066 \\ 
+   &  & (0.004) & (0.005) & (0.027) & (0.016) & (0.049) & (0.020) \\ 
+  &  $rb_{t+1}$ & 0.015 & -0.009 & 0.114 & 0.065 & -0.091 & 0.872 \\ 
+  &   & (0.008) & (0.010) & (0.055) & (0.032) & (0.098) & (0.040) \\ 
+  \\ \hline \\
+  &  $e_{t+1}$ & 0.003 & -0.141 & -1.596 & 0.440 & 1.293 & -0.151 \\ 
+  &   & (0.055) & (0.092) & (0.568) & (0.244) & (0.658) & (0.374) \\ 
+  &  $r_{t+1}$ & 0.009 & 0.993 & -0.212 & 0.078 & -0.089 & 0.088 \\ 
+   &  & (0.007) & (0.011) & (0.071) & (0.030) & (0.082) & (0.047) \\ 
+  1952:1-1979:9 &  $\Delta y_{n,t+1}$ & 0.013 & -0.001 & -0.159 & 0.070 & -0.111 & 0.088 \\ 
+   &  & (0.006) & (0.010) & (0.062) & (0.027) & (0.072) & (0.041) \\ 
+  &  $s_{n,t+1}$ & 0.001 & 0.005 & 0.200 & 0.903 & 0.156 & -0.117 \\ 
+   &  & (0.005) & (0.008) & (0.052) & (0.022) & (0.060) & (0.034) \\ 
+  &  $d_{t+1}-p_{t+1}$ & 0.004 & 0.079 & -0.068 & 0.155 & -0.039 & 0.054 \\ 
+   &  & (0.005) & (0.008) & (0.047) & (0.020) & (0.054) & (0.031) \\ 
+  &  $rb_{t+1}$ & 0.013 & -0.007 & -0.118 & 0.091 & -0.121 & 0.977 \\ 
+   &  & (0.006) & (0.010) & (0.061) & (0.026) & (0.071) & (0.040) \\ 
+   \\ \hline \\
+  &  $e_{t+1}$ & 0.049 & -0.120 & -0.171 & 0.692 & 0.640 & -0.362 \\ 
+   &  & (0.065) & (0.114) & (0.781) & (0.320) & (0.673) & (0.456) \\ 
+  &  $r_{t+1}$ & 0.014 & 0.979 & -0.108 & 0.087 & -0.057 & 0.085 \\ 
+   &  & (0.007) & (0.013) & (0.088) & (0.036) & (0.076) & (0.051) \\ 
+  1952:1-1972:12 &  $\Delta y_{n,t+1}$ & 0.011 & -0.017 & -0.081 & 0.070 & -0.031 & 0.074 \\ 
+   &  & (0.006) & (0.010) & (0.071) & (0.029) & (0.061) & (0.041) \\ 
+  &  $s_{n,t+1}$ & 0.004 & 0.02 & 0.048 & 0.888 & 0.113 & -0.094 \\ 
+   &  & (0.005) & (0.009) & (0.060) & (0.025) & (0.052) & (0.035) \\ 
+  &  $d_{t+1}-p_{t+1}$ & 0.004 & 0.068 & -0.167 & 0.220 & -0.035 & 0.114 \\ 
+   &  & (0.006) & (0.011) & (0.073) & (0.030) & (0.063) & (0.042) \\ 
+  &  $rb_{t+1}$ & 0.012 & -0.021 & -0.036 & 0.088 & -0.046 & 0.966 \\ 
+   &  & (0.006) & (0.010) & (0.071) & (0.029) & (0.061) & (0.042) \\ 
+  \\ \hline \\
+  &  $e_{t+1}$ & -0.077 & -0.043 & -0.903 & 0.192 & 0.718 & -0.388 \\ 
+  & & (0.078) & (0.108) & (0.426) & (0.284) & (1.416) & (0.343) \\ 
+  &  $r_{t+1}$  & 0.004 & 0.999 & 0.085 & 0.028 & -0.116 & -0.072 \\ 
+  & & (0.016) & (0.023) & (0.09 ) & (0.06 ) & (0.298) & (0.072) \\ 
+  1973:1-1987:2 &  $\Delta y_{n,t+1}$ & 0.015 & 0.006 & 0.118 & 0.037 & -0.226 & -0.058 \\ 
+  & & (0.016) & (0.022) & (0.088) & (0.059) & (0.292) & (0.071) \\ 
+  &  $s_{n,t+1}$ & -0.010 & 0.011 & -0.088 & 0.913 & 0.087 & 0.024 \\ 
+  && (0.013) & (0.017) & (0.069) & (0.046) & (0.228) & (0.055) \\ 
+  &  $d_{t+1}-p_{t+1}$ & 0.002 & 0.072 & -0.005 & 0.087 & -0.155 & 0.018 \\ 
+  & & (0.004) & (0.006) & (0.023) & (0.016) & (0.077) & (0.019) \\ 
+  &  $rb_{t+1}$ & 0.016 & 0.002 & 0.144 & 0.058 & -0.233 & 0.840 \\ 
+  & & (0.016) & (0.022) & (0.087) & (0.058) & (0.291) & (0.071) \\
+  \\ \hline
+%\end{tabular}
+\end{longtable}
+\end{center}
+
+\paragraph{} Table-\ref{tab:table2} reports the variance decomposition implied by the VAR for
+excess stock returns. The first row of the table shows the $R^2$ when the VAR
+is used to forecast the monthly excess stock return, along with the 
+significance levels of the forecasting variables. 
+The VAR is used to calculate the components of the unexpected excess stock return $\tilde{e}_{t+1}$ in equation: $\tilde{e}_{t+1}$ = $\tilde{e}_{d,t+1}$ - $\tilde{e}_{r,t+1}$ - $\tilde{e}_{e,t+1}$. Then the table reports the component $\tilde{e}_{d,t+1}$ that can be interpreted as news about future dividends, while $\tilde{e}_{r,t+1}$ is news about future real interest rates and $\tilde{e}_{e,t+1}$ is news about future excess stock returns. The table reports the variances and covariances of these components, divided by the variance of $\tilde{e}_{t+1}$ so that the numbers reported add up to one.
+
+\paragraph{} The components of stock returns can be derived as follows.
+\begin{equation}
+\begin{array}{c}
+\tilde{e}_{e, t+1}=e 1^{\prime} \sum_{j=1}^{\infty} \rho^{j} A^{j} w_{t+1}=e 1^{\prime} \rho A(I-\rho A)^{-1} w_{t+1} \\
+\tilde{e}_{r, t+1}=e 2^{\prime} \sum_{j=0}^{\infty} \rho^{j} A^{j} w_{t+1}=e 2^{\prime}(I-\rho A)^{-1} w_{t+1} \\
+\tilde{e}_{d, t+1}=\tilde{e}_{t+1}+\tilde{e}_{e, t+1}+\tilde{e}_{r, t+1}
+\end{array}
+\end{equation}
+
+Here, I assumed $\rho=0.9$ (since it should be less than 1), and estimated the components.
+
+\begin{table}[H]
+\centering
+\caption {: Variance Decomposition for Excess Stock Returns} \label{tab:table2} \\
+\caption*{This table is based on a monthly VAR that includes the excess stock return, real interest rate, change in the 1-month bill rate, 10-year and 2-month yield spreads, log dividend-price ratio, and relative bill rate (the difference between the bill rate and a 1-year backwards moving average). "Return $R^2$" is the $R^2$ in the regression of the excess stock return on the VAR explanatory variables, while "Significance" is the joint significance of the explanatory variables in this regression. The VAR is used to calculate the components of the unexpected excess stock return $\tilde{e}_{t+1}$ in equation: $\tilde{e}_{t+1}$ = $\tilde{e}_{d,t+1}$ - $\tilde{e}_{r,t+1}$ - $\tilde{e}_{e,t+1}$. The component $\tilde{e}_{d,t+1}$ can be interpreted as news about future dividends, while $\tilde{e}_{r,t+1}$ is news about future real interest rates and $\tilde{e}_{e,t+1}$ is news about future excess stock returns. The table reports the variances and covariances of these components, divided by the variance of $\tilde{e}_{t+1}$ so that the numbers reported add up to one.}\\ 
+\begin{tabular}{ccccccc}
+  \hline
+VAR lag length & 1 & 1 & 1 & 1 & 3 \\ 
+Sample period & 52:1-87:2 & 52:1-79:9 & 52:1-72:12 & 73:1-87:2 & 52:1-87:2 \\ 
+  \hline\
+Return $R^2$ & 0.055 & 0.067 & 0.043 & 0.077 & 0.077 \\ 
+Significance & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+  \hline
+Shares of & & & & & &\\
+  Var($\tilde{e}_d$) & 1.00 & 0.99 & 0.99 & 1.01 & 1.01 \\ 
+  -2 Cov($\tilde{e}_d$,$\tilde{e}_r$) & -0.03 & -0.01 & 0.00 & -0.07 & -0.04 \\ 
+  -2 Cov($\tilde{e}_d$,$\tilde{e}_r$) & 0.00 & -0.00 & -0.01 & 0.01 & 0.01 \\ 
+  Var($\tilde{e}_r$) & 0.03 & 0.02 & 0.01 & 0.05 & 0.03 \\ 
+  2 Cov($\tilde{e}_d$,$\tilde{e}_r$) & 0.00 & 0.00 & 0.00 & -0.01 & 0.00 \\ 
+  Var($\tilde{e}_e$) & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\paragraph{} In the original paper, the variations in stock returns is mostly explained by risk premium, but the results I obtained contradict with that. They are mostly explained by cash flow news in my results.
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                    Paper-2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{\cite{campbell1991yield}} \label{sec:CS}
+
+\subsection{Introduction}
+This section is the replication of \cite{campbell1991yield}. The authors of this paper find that the yield spread between long-term and short-term maturity bonds predict short-term interest rates. Higher spreads predict an increase in short-term rates, but declining yields for long-term bonds in comparison to short-term maturity bonds.
+
+\subsection{Data description}
+The data on zero-coupon yields implied by the yield curve for U.S. Treasury securities used in this paper is from McCulloch and Kwon website. As per the original paper, I report results for the full sample period 1952:1-1987:2. The results are estimated for all possible pairs of maturities in the range 1, 2, 3, 4, 6, and 9 months and 1, 2, 3, 4, 5, and 10 years.  
+
+\subsection{Methodology}
+The expectations theory of the term structure of interest rates is a relationship between
+a longer-term n-period interest rate $R_{t}^{(n)}$ and a shorter-term m-period interest rate $R_{t}^{(m)}$, where n/m is an integer. The relation between them is given by:
+
+\begin{equation} \label{eq:CS1}
+R_{t}^{(n)}=(1 / k) \sum_{i=0}^{k-1} E_{t} R_{t+m i}^{(m)}+c
+\end{equation}
+where $k=n/m$
+
+The spread between the n-period rate and the m-period rate is given by:
+\begin{equation} \label{eq1}
+S_{t}^{(n, m)}={R_{t}^{(n)}-R_{t}^{(m)}}=(1/2) E_{t} \Delta^{m} R_{t+m}^{(m)}=(1 / 2) E_{t}\left[R_{t+m}^{(m)}-R_{t}^{(m)}\right]
+\end{equation}
+
+According to the expectations theory, the maturity-specific multiple of the yield spread is given by:
+\begin{equation} \label{eq6}
+s_{t}^{(n, m)} \equiv(m /(n-m)) S_{t}^{(n, m)}=E_{t} R_{t+m}^{(n-m)}-R_{t}^{(n)}
+\end{equation}
+
+The spread forecasts a weighted average $S_{t}^{(n, m)^*}$ of changes in shorter-term
+(m-period) interest rates over n periods. This is called the "perfect-foresight spread" and is given by:
+
+\begin{equation} \label{eq3}
+S_{t}^{(n, m)}=E_{t} S_{t}^{(n, m)^{*}}
+\end{equation}
+
+\begin{equation} \label{eq4}
+S_{t}^{(n, m)^{*}} \equiv(1 / k) \sum_{i=1}^{k-1}\left(\sum_{j=1}^{i} \Delta^{m} R_{t+j m}^{(m)}\right)=\sum_{i=1}^{k-1}(1-i / k) \Delta^{m} R_{t+i m}^{(m)}
+\end{equation}
+
+where, the notation $\Delta^{m}$ indicates that a change is measured over m periods as below:
+\begin{equation}
+\Delta^{m} R_{t+m}^{(m)}=R_{t+m}^{(m)}-R_{t}^{(m)}
+\end{equation}
+
+Finally, the theoretical spread is estimated using VAR approach. The authors employ a p-th order VAR. This system can be rewritten as a first-order VAR in the form of equation (\ref{eq:CA2}), where the state vector ($z_{t}$), has 2p
+elements, first $\Delta R_{t}^{(m)}$ and p-1 lags and then $S_{t}^{(n, m)}$ and p -1 lags.
+
+\begin{equation} \label{eq5}
+S_{t}^{\prime (n,m)} = h^{\prime} A\left[I-(m/n)\left(I-A^{n}\right)\left(I-A^{m}\right)^{-1}\right](I-A)^{-1} z_{t}
+\end{equation}
+
+where, the vectors h and g are defined as below:
+\begin{equation}
+g^{\prime} z_{t}=S_{t}^{(n, m)} \text { and } h^{\prime} z_{t}=\Delta R_{t}^{(m)}
+\end{equation}
+
+\subsection{Results}
+\paragraph{} Table-\ref{tab:CS1} reports that the slope of the term structure between almost any two maturities (one longer-term bond and one short-term bond)
+forecasts the change in yield of the longer-term (n-period)
+bond over the life of the shorter-term (m-period) bond in the opposite direction. Here, the short-term bond is the one maturing in one month. Hansen and Hodrick standard errors are also estimated for these coefficients and are found to be significant for longer maturity bonds (n>12 months).
+
+\paragraph{} Table-\ref{tab:CS2} reports the coefficients of the regressions of perfect-foresight spread on the observed spread between the n-period rate and the m-period rate. The observed term spread predicts perfect-foresight spread in the right direction. Hansen and Hodrick standard errors are also estimated for these coefficients and are found to be insignificant for almost all the maturities.
+
+\paragraph{} Table-\ref{tab:CS3} reports the correlation between the actual term spread and the theoretical spread. In line with the original paper, the correlations first decreased with the maturity until n=12 months and then increased upto n=120 months.
+
+\begin{table}[H]
+\centering
+\caption{: Regression of $R_{t+m}^{n-m}$-$R_t^{n}$ on predicted change $s_{t}^{(n,m)}$} \label{tab:CS1}
+%\floatbox[\capbeside]{table}
+\caption*{The first number in any set is the estimated regression slope coefficient of $R_{t+m}^{n-m}$ -$R_t^{n}$  onto $s_{t}^{(n,m)}$ =
+(m/(n -m))*$S_{t}^{(n,m)}$. According to the expectations theory, this coefficient should equal one. Constant terms (not shown) are included in all regressions. Hansen-Hodrick standard errors are below estimated coefficients, in parentheses. For each regression, the sample is the longest possible using data from 1952:l through 1987:2.
+Where n/m is an integer the table also gives, below the standard errors.}
+\begin{tabular}{rc}
+  \hline
+ n & m=1 \\ 
+  \hline
+2 & 0.275 \\ 
+   & (0.163) \\ 
+  3 & 0.057 \\ 
+   & (0.117) \\ 
+  4 & -0.143 \\ 
+   & (0.095) \\ 
+  6 & -0.693 \\ 
+   & (0.082) \\ 
+  9 & -1.225 \\ 
+   & (0.052) \\ 
+  12 & -1.341 \\ 
+   & (0.031) \\ 
+  24 & -1.784 \\ 
+   & (0.01) \\ 
+  36 & -2.227 \\ 
+   & (0.005) \\ 
+  48 & -2.642 \\ 
+   & (0.003) \\ 
+  60 & -3.046 \\ 
+   & (0.003) \\ 
+  120 & -5.013 \\ 
+   & (0.001) \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{: Slope coefficients in regression of $S_{t}^{(n,m)^{*}}$  on predicted change $S_{t}^{(n,m)}$} \label{tab:CS2}
+%\floatbox[\capbeside]{table}
+\caption*{$S_{t}^{(n,m)^{*}}$, the perfect-foresight spread, is defined in equation (\ref{eq4}). The first element in each set is the slope coefficient in a regression with a constant term, and that in parentheses is the Hansen-Hodrick standard error. By the expectations theory, the slope coefficient should be one. The sample period for each
+element is the longest possible sample using data from 1952:l to 1987:2. Since computation of $S_{t}^{(n,m)^{*}}$ requires data extending n-m periods into the future, the sample in the regression ends n-m months before 1987:2.}
+\begin{tabular}{rc}
+  \hline
+ n & m=1 \\ 
+  \hline
+2 & 0.500 \\ 
+   & (-0.01) \\ 
+  3 & 0.885 \\ 
+   & (-0.146) \\ 
+  4 & 1.231 \\ 
+   & (-0.427) \\ 
+  6 & 1.922 \\ 
+   & (-0.411) \\ 
+  9 & 1.987 \\ 
+   & (-0.732) \\ 
+  12 & 2.143 \\ 
+   & (-1.044) \\ 
+  24 & 2.877 \\ 
+   & (-1.386) \\ 
+  36 & 3.365 \\ 
+   & (-1.707) \\ 
+  48 & 3.705 \\ 
+   & (0.928) \\ 
+  60 & 5.737 \\ 
+  & (1.49) \\ 
+  120 & 6.73 \\ 
+   & (1.355) \\
+   \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{: Correlation of $S_{t}^{\prime (n,m)}$  and $S_{t}^{(n,m)}$} \label{tab:CS3}
+\caption*{This table gives the correlation coefficients of $S_{t}^{\prime (n,m)}$ with $S_{t}^{(n,m)}$ computed from equation (\ref{eq6}) in the text based on a vector auto regression starting in 1952:l and ending in 1987:2.}
+\begin{tabular}{rc}
+  \hline
+n & m=1 \\ 
+  \hline
+2 & 0.401 \\ 
+  3 & 0.376 \\ 
+  4 & 0.212 \\ 
+  6 & 0.197 \\ 
+  9 & 0.199 \\ 
+  12 & 0.090 \\ 
+  24 & 0.141 \\ 
+  36 & 0.311 \\ 
+  48 & 0.401 \\ 
+  60 & 0.402 \\ 
+  120 & 0.413 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\clearpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                    Paper-3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{\cite{fama1987information}} \label{sec:CS}
+
+\subsection{Introduction}
+This section is the replication of \cite{fama1987information}. The authors of this paper use the current 1-year forward rates on longer maturity U.S treasury bonds to predict future interest rates and current 1-year expected returns on the bonds with different maturities. 
+
+\subsection{Data description}
+The data on prices and yields of discounted bonds of different maturities are extracted from Center for Research in Security Prices (CRSP). As per the original paper, I report results for the full sample period: January, 1964 - December, 1984.
+
+\subsection{Methodology and Results}
+The return on an x-year discount bond bought at time t and held until t+x-y, when
+it has y years to maturity, is defined as
+\begin{equation} \label{eq:FB1}
+\begin{aligned}
+h(x,&y:t+x-y)=\ln p(y:t+x-y)-\ln p(x:t)
+\end{aligned}
+\end{equation}
+where, ln indicates a natural log, and p(x:t) is the price of the bond at t.
+
+\paragraph{} The yield r(1:t) on a 1-year bond is called
+the 1-year spot rate. The yield r(x: t) on a discount bond with
+\$1 face value and x years to maturity at t is
+defined as
+\begin{equation} \label{eq:FB2}
+r(x:t)=-\ln p(x:t)
+\end{equation}
+
+The time t 1-year forward rate for the year
+from t+x-1 to t+x is
+\begin{equation} \label{eq:FB3}
+f(x,x-1:t)=\ln p(x-1:t)-\ln p(x:t)=r(x:t)-r(x-1:t)
+\end{equation}
+
+\paragraph{} Table-\ref{tab:FB1} reports that the coefficients and standard errors of the regressions of the current term premium in the 1-year return on the current forward-spot spread. Below is the regression equation:
+
+\begin{equation} \label{eq7}
+h(x,x-1:t+1)-r(1:t)=a_{2}+b_{2}[f(x,x-1:t)-r(1:t)]+u_{2}(t+1)
+\end{equation}
+
+According to the Expectations Hypothesis (EH), a = 0 and $b_{1}$ = 1 in the above regression. The slope ($b_{1}$) in this equation is observed to be positive through all maturity bonds (but not close to 1), and the standard errors are small. This coefficient ($b_{1}$) splits variation in the forward-spot spread between the 1-year expected term premium and expected yield change. Similarly, the constant (a) is different from zero but the standard errors are high. $R^{2}$ values are observed to be explaining 10\% variation on an average. The last 5 columns of the table are the correlations between residuals and their lags. These values are very low suggesting that they are uncorrelated.
+
+
+\begin{table}[H]
+\centering
+\caption{: Term Premium regressions: estimates of the below equation} \label{tab:FB1}
+\caption*{$h(x,x-1:t+1)-r(1:t)=a_{2}+b_{2}[f(x,x-1:t)-r(1:t)]+u_{2}(t+1)$}
+\caption*{r(1:t) is the 1-year spot rate observed at t; h(x,x-1:t+1) is the 1-year return (t to t+1) on an x-year bond, and h(x,x-1:t+1)-r(1:t) is the term premium in the 1-year return. f(x,x-1:t) is a 1-year forward rate
+observed at t, and f(x,x-1:t)-r(1:t) is the forward-spot spread. The regression estimates the expected value of the term premium to be observed at t + 1, conditional on the forward-spot spread observed at t. The standard errors, s(u) and s(h), of the regression coefficients are adjusted for possible heteroskedasticity and for the auto-correlation
+induced by the overlap of monthly observations on annual returns. The regression $R^2$ is adjusted for degrees of freedom. The sample size is 252, corresponding to the period
+January 1964 to December 1984 for the forward-spot spreads and January 1965 to December 1985 for the term
+premiums. The data is derived from Center for Research in Security Prices (CRSP).}
+\toprule
+\hspace*{\fill} Residual Autos (yearly lag)
+\begin{tabular}{cccccccccccc}
+ \midrule
+ Dependent & $a_{2}$ & $s(a_{2})$ & $b_{2}$ & $s(b_{2})$ & $R^{2}$ & & 1 & 2 & 3 & 4 & 5 \\
+ \hline
+ $h(2,1:t+1)-r(1:t)$ & -0.72 & 0.55 & 0.57 & 0.07 & 0.21 & &-0.09 & -0.05 & 0.07 & -0.18 & -0.04 \\ 
+  $h(3,1:t+1)-r(1:t)$ & -0.42 & 0.76 & 0.50 & 0.10 & 0.10 & &-0.11 & -0.06 & 0.03 & -0.22 & -0.13 \\ 
+  $h(4,1:t+1)-r(1:t)$ & -0.37 & 0.99 & 0.41 & 0.12 & 0.04 & &-0.11 & -0.08 & 0.03 & -0.21 & -0.14 \\ 
+  $h(5,1:t+1)-r(1:t)$ & -0.26 & 1.16 & 0.32 & 0.14 & 0.02 & &-0.07 & -0.08 & -0.01 & -0.23 & -0.16 \\ 
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{} Table-\ref{tab:FB2} reports that the coefficients and standard errors of the regressions of the change in spot rates on the current forward-spot spread. Below is the regression equation:
+
+\begin{equation} \label{eq8}
+r(x,t+x-1)-r(1:t)=a+b_{1}[f(x,x-1:t)-r(1:t)]+u(t+x-1)
+\end{equation}
+
+According to the Expectations Hypothesis (EH), a = 0 and $b_{1}$ = 1 in the above regression. The slope ($b_{1}$) in this equation is observed to be positive through all maturity bonds (but not close to 1), and the standard errors are small. Similarly, the constant (a) is different from zero but the standard errors are high. $R^{2}$ values are observed to be explaining 20\% variation on an average. The last 5 columns of the table are the correlations between residuals and their lags. The lag-1 errors are somewhat correlated but the values are very low for other lags suggesting that they are uncorrelated.
+
+\begin{table}[H]
+\centering
+\caption{: Regression forecasts of the change in the spot rate} \label{tab:FB2}
+\caption*{$r(x,t+x-1)-r(1:t)=a+b_{1}[f(x,x-1:t)-r(1:t)]+u(t+x-1)$}
+\caption*{r(1:t) is the 1-year spot rate observed at 1; f(x,x-1:t) is a 1-year forward rate observed at t; $\tilde{r}(1:t+x-1)$ is the time t forecast of r(1:t+x-1) from the first-order autoregression equation above fit to the time-series of r(1:t). The
+standard errors of the regression coefficients are adjusted for possible heteroskedasticity and for the autocorrelation induced by the overlap of monthly observations on annual or multiyear changes in the spot rate. The sample sue in the regressions for the 1-year change in the spot rate, r(1: t +1)- r(1: I) is 252, corresponding to the period January 1964 to December 1984 for the forward-spot spread and the period January 1965 to December 1985 for the 1-year changes in the 1-year spot rate. The data are derived from CRSP.}
+\toprule
+\hspace*{\fill} Residual Autos (yearly lag)
+\begin{tabular}{cccccccccccc}
+  \midrule
+ Dependent & a & s(a) & $b_{1}$ & $s(b_{1})$ & $R^{2}$ &  & 1 & 2 & 3 & 4 & 5 \\
+  \hline
+$r(1:t+1)-r(1:t)$ & 0.97 & 0.31 & 0.22 & 0.04 & 0.12 & & 0.02 & -0.14 & -0.10 & -0.09 & 0.05 \\ 
+  $r(1:t+2)-r(1:t)$ & 0.70 & 0.39 & 0.43 & 0.05 & 0.24 & & 0.46 & -0.09 & -0.18 & -0.14 & 0.04 \\
+  $r(1:t+3)-r(1:t)$ & 0.77 & 0.46 & 0.54 & 0.06 & 0.27 & & 0.59 & 0.14 & -0.17 & -0.14 & 0.02 \\ 
+  $r(1:t+4)-r(1:t)$ & 0.98 & 0.56 & 0.55 & 0.08 & 0.18 & & 0.62 & 0.24 & -0.01 & -0.22 & -0.01 \\ 
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+
+% Bibliography.
+\section{References}
+\begin{doublespacing}   % Double-space the bibliography
+\bibliographystyle{jf}
+\bibliography{bibliography}
+\end{doublespacing}
+
+\end{document}
+
